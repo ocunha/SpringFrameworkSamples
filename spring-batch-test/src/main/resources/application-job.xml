@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns="http://www.springframework.org/schema/batch"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/batch http://www.springframework.org/schema/batch/spring-batch.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+	
+	<context:annotation-config />
+	<context:component-scan base-package="br.osnir.batch" />
+	
+	<beans:import resource="integration-pipeline.xml"/>
+	<beans:import resource="datasource/schola-ratio/data-sources.xml"/>
+
+	<job id="testJob">
+		<step id="stepAluno">
+			<tasklet>
+				<chunk reader="alunoReader" writer="alunoWriter" processor="alunoProcessor" commit-interval="1"
+					skip-limit="5000">
+					<skippable-exception-classes>
+						<include class="java.lang.RuntimeException" />
+					</skippable-exception-classes>
+				</chunk>
+			</tasklet>
+		</step>
+		<listeners>
+			<listener ref="alunoListener" />
+		</listeners>
+	</job>
+
+	<beans:bean id="alunoReader"
+		class="org.springframework.batch.item.database.JdbcCursorItemReader">
+		<beans:property name="dataSource" ref="dataSourceReader" />
+		<beans:property name="verifyCursorPosition" value="false" />
+		<beans:property name="rowMapper" ref="rowMapper" />
+		<beans:property name="sql">
+			<beans:value>
+				<![CDATA[SELECT aluno_id, cpf, datanascimento, email, estadonat, image,
+          			nacionalidade, naturalidade, nome, nomemae, nomepai, orgaoexpeditor,
+          			rg, sexo, status, telefone, uforgaoexpeditor, datadematricula,
+          			endereco_usuario, user_name from tb_aluno]]>
+			</beans:value>
+		</beans:property>
+	</beans:bean>
+
+	<beans:bean id="alunoWriter"
+		class="org.springframework.batch.item.database.JdbcBatchItemWriter">
+		<beans:property name="dataSource" ref="dataSourceWriter" />
+		<beans:property name="itemPreparedStatementSetter" ref="itemPreparedStatementSetter" />
+		<beans:property name="sql">
+			<beans:value>
+				<![CDATA[
+					   INSERT INTO tb_aluno(aluno_id, cpf, datanascimento, email, estadonat, image, nacionalidade, 
+            								naturalidade, nome, nomemae, nomepai, orgaoexpeditor, rg, sexo, status, 
+            								telefone, uforgaoexpeditor, datadematricula, endereco_usuario, user_name)
+    					VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    			]]>
+			</beans:value>
+		</beans:property>
+	</beans:bean>
+	
+	<beans:bean id="alunoProcessor" class="br.osnir.batch.processor.AlunoProcessor">
+		<beans:property name="integrationInputChannel" ref="integrationInputChannel" />
+		<beans:constructor-arg>
+			<beans:bean class="org.springframework.integration.core.MessagingTemplate" />
+		</beans:constructor-arg>
+	</beans:bean>
+
+</beans:beans>
