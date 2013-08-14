@@ -43,7 +43,8 @@ public class ProdutoMapper implements RowMapper<Aluno> {
         item.setCpf(ps.getLong(column++));
         item.setDataNascimento(ps.getDate(column++));
         item.setEmail(ps.getString(column++));
-        item.setEstadoNat(Estado.valueOf(ps.getString(column++)));
+//        item.setEstadoNat(Estado.valueOf(ps.getString(column++)));
+        item.setEstadoNat(null); column++;
         item.setImage(null); column ++;
         item.setNacionalidade(ps.getString(column++));
         item.setNaturalidade(ps.getString(column++));

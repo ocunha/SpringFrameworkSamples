@@ -17,7 +17,7 @@
 	<job id="testJob">
 		<step id="stepAluno">
 			<tasklet>
-				<chunk reader="alunoReader" writer="alunoWriter" processor="alunoProcessor" commit-interval="1"
+				<chunk reader="alunoReader" writer="alunoFileWriter" processor="alunoProcessor" commit-interval="1"
 					skip-limit="5000">
 					<skippable-exception-classes>
 						<include class="java.lang.RuntimeException" />
@@ -58,6 +58,21 @@
     					VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     			]]>
 			</beans:value>
+		</beans:property>
+	</beans:bean>
+	
+	<beans:bean id="alunoFileWriter" class="org.springframework.batch.item.file.FlatFileItemWriter">
+		<beans:property name="resource" value="file:domain.all.csv" />
+		<beans:property name="appendAllowed" value="true" />
+		<beans:property name="lineAggregator">
+		  <beans:bean class="org.springframework.batch.item.file.transform.DelimitedLineAggregator">
+			<beans:property name="delimiter" value="," />
+			<beans:property name="fieldExtractor">
+			  <beans:bean class="org.springframework.batch.item.file.transform.BeanWrapperFieldExtractor">
+				<beans:property name="names" value="id, cpf, dataNascimento, email, estadoNat, image, nacionalidade,naturalidade, nome, nomeMae, nomePai, orgaoExpeditor, rg, sexo, status,telefone, ufOrgaoExpeditor, dataDeMatricula, endereco.id, userLogin.username" />
+			  </beans:bean>
+			</beans:property>
+		  </beans:bean>
 		</beans:property>
 	</beans:bean>
 	

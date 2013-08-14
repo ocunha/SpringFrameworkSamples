@@ -43,12 +43,13 @@ public class AlunoProcessor implements ItemProcessor<Object, Object> {
     }
 
     public Object process(Object item) {
-        Message<?> inputMessage = MessageBuilder.withPayload(item).build();
+//        Message<?> inputMessage = MessageBuilder.withPayload(item).build();
+//
+//        Message<?> outputMessage = this.messagingGateway.sendAndReceive(
+//                this.integrationInputChannel, inputMessage);
 
-        Message<?> outputMessage = this.messagingGateway.sendAndReceive(
-                this.integrationInputChannel, inputMessage);
-
-        return outputMessage;
+//        return outputMessage;
+    	return item;
     }
 
     public void setIntegrationInputChannel(
