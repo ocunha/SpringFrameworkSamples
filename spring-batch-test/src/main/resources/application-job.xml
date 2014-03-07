@@ -12,12 +12,12 @@
 	<context:component-scan base-package="br.osnir.batch" />
 	
 	<beans:import resource="integration-pipeline.xml"/>
-	<beans:import resource="datasource/schola-ratio/data-sources.xml"/>
+	<beans:import resource="datasource/data-sources.xml"/>
 
-	<job id="testJob">
-		<step id="stepAluno">
+	<job id="jobCalculatePersonTax">
+		<step id="stepCalculatePersonTax">
 			<tasklet>
-				<chunk reader="alunoReader" writer="alunoFileWriter" processor="alunoProcessor" commit-interval="1"
+				<chunk reader="itemReader" writer="itemFileWriter" processor="itemProcessor" commit-interval="1"
 					skip-limit="5000">
 					<skippable-exception-classes>
 						<include class="java.lang.RuntimeException" />
@@ -26,57 +26,70 @@
 			</tasklet>
 		</step>
 		<listeners>
-			<listener ref="alunoListener" />
+			<listener ref="itemListener" />
 		</listeners>
 	</job>
 
-	<beans:bean id="alunoReader"
+	<beans:bean id="itemReader" class="org.springframework.batch.item.file.FlatFileItemReader">
+		<beans:property name="resource" value="file:input.csv" />
+		<beans:property name="lineMapper">
+			<beans:bean class="org.springframework.batch.item.file.mapping.DefaultLineMapper">
+				<beans:property name="lineTokenizer">
+					<beans:bean class="org.springframework.batch.item.file.transform.DelimitedLineTokenizer">
+						<beans:property name="delimiter" value="|"/>
+						<beans:property name="names" value="id,name,salary,dependents"/>
+					</beans:bean>
+				</beans:property>
+				<beans:property name="fieldSetMapper">
+					<beans:bean class="org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper">
+						<beans:property name="prototypeBeanName" value="person" />
+					</beans:bean>
+				</beans:property>
+			</beans:bean>
+		</beans:property>
+	</beans:bean>
+
+	<beans:bean id="person" class="br.osnir.batch.object.Person" />
+
+	<beans:bean id="itemDBReader"
 		class="org.springframework.batch.item.database.JdbcCursorItemReader">
 		<beans:property name="dataSource" ref="dataSourceReader" />
 		<beans:property name="verifyCursorPosition" value="false" />
 		<beans:property name="rowMapper" ref="rowMapper" />
 		<beans:property name="sql">
 			<beans:value>
-				<![CDATA[SELECT aluno_id, cpf, datanascimento, email, estadonat, image,
-          			nacionalidade, naturalidade, nome, nomemae, nomepai, orgaoexpeditor,
-          			rg, sexo, status, telefone, uforgaoexpeditor, datadematricula,
-          			endereco_usuario, user_name from tb_aluno]]>
+				<![CDATA[SELECT id, name, salary, dependents from tb_person]]>
 			</beans:value>
 		</beans:property>
 	</beans:bean>
 
-	<beans:bean id="alunoWriter"
+	<beans:bean id="itemDBWriter"
 		class="org.springframework.batch.item.database.JdbcBatchItemWriter">
 		<beans:property name="dataSource" ref="dataSourceWriter" />
 		<beans:property name="itemPreparedStatementSetter" ref="itemPreparedStatementSetter" />
 		<beans:property name="sql">
 			<beans:value>
-				<![CDATA[
-					   INSERT INTO tb_aluno(aluno_id, cpf, datanascimento, email, estadonat, image, nacionalidade, 
-            								naturalidade, nome, nomemae, nomepai, orgaoexpeditor, rg, sexo, status, 
-            								telefone, uforgaoexpeditor, datadematricula, endereco_usuario, user_name)
-    					VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    			]]>
+				<![CDATA[INSERT INTO tb_person_tax(person_id, free, tax, date) VALUES (?, ?, ?, ?)]]>
 			</beans:value>
 		</beans:property>
 	</beans:bean>
 	
-	<beans:bean id="alunoFileWriter" class="org.springframework.batch.item.file.FlatFileItemWriter">
-		<beans:property name="resource" value="file:domain.all.csv" />
+	<beans:bean id="itemFileWriter" class="org.springframework.batch.item.file.FlatFileItemWriter">
+		<beans:property name="resource" value="file:output.file" />
 		<beans:property name="appendAllowed" value="true" />
 		<beans:property name="lineAggregator">
 		  <beans:bean class="org.springframework.batch.item.file.transform.DelimitedLineAggregator">
 			<beans:property name="delimiter" value="," />
 			<beans:property name="fieldExtractor">
 			  <beans:bean class="org.springframework.batch.item.file.transform.BeanWrapperFieldExtractor">
-				<beans:property name="names" value="id, cpf, dataNascimento, email, estadoNat, image, nacionalidade,naturalidade, nome, nomeMae, nomePai, orgaoExpeditor, rg, sexo, status,telefone, ufOrgaoExpeditor, dataDeMatricula, endereco.id, userLogin.username" />
+				<beans:property name="names" value="person.id,person.name,person.salary,person.dependents,free,tax,date" />
 			  </beans:bean>
 			</beans:property>
 		  </beans:bean>
 		</beans:property>
 	</beans:bean>
 	
-	<beans:bean id="alunoProcessor" class="br.osnir.batch.processor.AlunoProcessor">
+	<beans:bean id="itemProcessor" class="br.osnir.batch.processor.MyItemProcessor">
 		<beans:property name="integrationInputChannel" ref="integrationInputChannel" />
 		<beans:constructor-arg>
 			<beans:bean class="org.springframework.integration.core.MessagingTemplate" />

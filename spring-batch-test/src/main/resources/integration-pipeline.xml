@@ -9,7 +9,16 @@
 		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd">
 
 	<int:channel id="integrationInputChannel" />
+	<int:channel id="objToJsonChannel" />
+	<int:channel id="jsonToObjChannel" />
 	
-	<int:transformer input-channel="integrationInputChannel" ref="alunoTransform" />
+	<int:transformer input-channel="integrationInputChannel" output-channel="objToJsonChannel" ref="itemTransform" />
+
+	<int:object-to-json-transformer input-channel="objToJsonChannel" output-channel="jsonToObjChannel" />
+	
+	<int:json-to-object-transformer input-channel="jsonToObjChannel" type="br.osnir.batch.object.PersonTax" />
+
+	
+	<int:channel-interceptor pattern="jsonToObjChannel" ref="itemInterceptor" />
 
 </beans:beans>
