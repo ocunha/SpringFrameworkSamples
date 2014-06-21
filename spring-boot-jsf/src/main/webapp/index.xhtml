@@ -1,0 +1,41 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:ui="http://java.sun.com/jsf/facelets"
+        xmlns:h="http://java.sun.com/jsf/html" xmlns:f="http://java.sun.com/jsf/core"
+        xmlns:p="http://primefaces.org/ui" xmlns:c="http://java.sun.com/jsp/jstl/core">
+<h:head>
+	<meta charset="utf-8" />
+    <meta name="viewport" content="width-device-width, initial-scale-1.0" />
+</h:head>
+<h:body>
+	<h:form id="loginForm">
+		<p:growl autoUpdate="true" showDetail="true" />
+		<p:panel header="Novo">
+			<h:panelGrid columns="3" >
+				<h:outputText value="Nome *" />
+				<p:inputText id="name" value="#{mBeanElection.candidateName}">
+					<p:ajax event="blur" listener="#{mBeanElection.candidateName}"/>
+				</p:inputText>
+				
+				<p:commandButton value="Salvar" update="dataTable name" process="@form" action="#{mBeanElection.add}"/>
+			</h:panelGrid>
+		</p:panel>
+		
+		<p:separator />
+	
+		<p:dataTable id="dataTable" var="c" rowIndexVar="i" value="#{mBeanElection.candidates}" emptyMessage="Sem candidatos">
+			<p:column headerText="Nome">
+				<h:outputText value="#{c.value.name}" />
+			</p:column>
+
+			<p:column headerText="Qtd Votos">
+				<h:outputText value="#{c.value.votos}" />
+			</p:column>
+			
+			<p:column headerText="Ações">
+				<p:commandButton value="+" action="#{mBeanElection.increaseVote(i)}" update="dataTable" />
+				<p:commandButton value="-" action="#{mBeanElection.decreaseVote(i)}" update="dataTable" />
+			</p:column>
+		</p:dataTable>
+				
+	</h:form>
+</h:body>
+</html>
